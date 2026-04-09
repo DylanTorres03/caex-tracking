@@ -1,0 +1,32 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Guia {
+  id              Int             @id @default(autoincrement())
+  numeroGuia      String          @unique @map("numero_guia")
+  estadoActual    String          @map("estado_actual")
+  ubicacionActual String          @map("ubicacion_actual")
+  destinatario    String?
+  createdAt       DateTime        @default(now()) @map("created_at")
+  historial       HistorialRuta[]
+
+  @@map("guias")
+}
+
+model HistorialRuta {
+  id          Int      @id @default(autoincrement())
+  guiaId      Int      @map("guia_id")
+  guia        Guia     @relation(fields: [guiaId], references: [id], onDelete: Cascade)
+  ubicacion   String
+  estado      String
+  descripcion String?
+  fechaHora   DateTime @map("fecha_hora")
+
+  @@map("historial_ruta")
+}

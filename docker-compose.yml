@@ -1,0 +1,51 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: caex_db
+    environment:
+      POSTGRES_DB: caex_tracking
+      POSTGRES_USER: caex
+      POSTGRES_PASSWORD: caex123
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U caex -d caex_tracking']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: caex_backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://caex:caex123@db:5432/caex_tracking
+      JWT_SECRET: caex-super-secret-jwt-key-2024
+      AUTH_USER: admin
+      AUTH_PASSWORD: caex2024
+      PORT: 3001
+      CORS_ORIGIN: http://localhost:3000
+    ports:
+      - '3001:3001'
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # El browser accede al backend por localhost (puerto expuesto en el host)
+        VITE_API_URL: http://localhost:3001
+    container_name: caex_frontend
+    depends_on:
+      - backend
+    ports:
+      - '3000:80'
+
+volumes:
+  pg_data:
